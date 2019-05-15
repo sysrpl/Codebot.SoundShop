@@ -1,0 +1,56 @@
+object MusicalForm: TMusicalForm
+  Left = 333
+  Height = 255
+  Top = 250
+  Width = 1000
+  Caption = 'Sound Shop'
+  ClientHeight = 255
+  ClientWidth = 1000
+  KeyPreview = True
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
+  OnKeyUp = FormKeyUp
+  OnResize = FormResize
+  Position = poScreenCenter
+  object MuteBox: TCheckBox
+    Left = 8
+    Height = 23
+    Top = 224
+    Width = 984
+    Align = alBottom
+    BorderSpacing.Around = 8
+    Caption = 'Audio muted'
+    OnChange = MuteBoxChange
+    TabOrder = 0
+  end
+  object WaveBox: TComboBox
+    Left = 8
+    Height = 27
+    Top = 8
+    Width = 984
+    Align = alTop
+    BorderSpacing.Around = 8
+    ItemHeight = 0
+    ItemIndex = 0
+    Items.Strings = (
+      'Sine Wave'
+      'Sawtooth Wave'
+      'Triangle Wave'
+      'Square Wave'
+      'Pulse Wave'
+      'Semisine Wave'
+    )
+    OnChange = WaveBoxChange
+    Style = csDropDownList
+    TabOrder = 1
+    Text = 'Sine Wave'
+  end
+  object AudioTimer: TTimer
+    Enabled = False
+    Interval = 10
+    OnTimer = AudioTimerTimer
+    left = 64
+    top = 152
+  end
+end

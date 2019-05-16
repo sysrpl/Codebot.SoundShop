@@ -104,7 +104,7 @@ type
 var
   AudioInitialized: Boolean;
   AudioLoaded: Boolean;
-  AudioBuffer: array[0..2047] of Byte;
+  AudioBuffer: array[0..AUDIO_SAMPLE_MEDIUM * 2] of Byte;
   AudioCounter: Int64;
   AudioChannels: array[ChannelLow..ChannelHigh] of TChannel;
   AudioWave: TWaveForm = WaveSine;
@@ -140,7 +140,7 @@ end;
 
 const
   Attack = 0.1;
-  Release = 0.05;
+  Release = 0.1;
   Sustain = 5.0;
   Slice = 1 / AUDIO_FREQ_CD_QUALITY;
 
@@ -153,6 +153,8 @@ var
     Drop is the time the note was released }
 
   procedure PlayFrequency(Frequency, Start, Drop, Phase: Double);
+  const
+    DeadMix = 0.05;
   var
     Sample: PAudioSample;
     Marker: Double;
@@ -164,9 +166,9 @@ var
   begin
     FillChar(AudioBuffer, SizeOf(AudioBuffer), 0);
     Frequency := SampleRate / Frequency;
-    C := AudioCounter;
     Sample := PAudioSample(@AudioBuffer);
     Marker := Time;
+    C := AudioCounter;
     for I := 1 to len div SizeOf(TAudioSample) do
     begin
       V := Frac(C / Frequency + Phase);
@@ -180,10 +182,13 @@ var
         Mix := Mix * (1 - (Marker - Start) / Sustain);
       if Drop > 0 then
         if Marker >= Drop then
-          Mix := 0
+          Break
         else
           Mix := Mix * (Drop - Marker) / Release;
-      S := Trunc(AudioWave(V) * Volume * Mix);
+      if Mix < DeadMix then
+        S := 0
+      else
+        S := Trunc(AudioWave(V) * Volume * Mix);
       Sample.L := S;
       Sample.R := S;
       Inc(C);
@@ -281,7 +286,7 @@ begin
     Spec.format := AUDIO_S16;
     Spec.channels := AUDIO_CHAN_STEREO;
     Spec.freq := AUDIO_FREQ_CD_QUALITY;
-    Spec.samples := AUDIO_SAMPLE_SMALL;
+    Spec.samples := AUDIO_SAMPLE_MEDIUM;
     Spec.callback := @AudioMixer;
     SDL_OpenAudio(@Spec, nil);
     SDL_PauseAudio(0);

@@ -7,7 +7,7 @@ interface
 { We define notes and numbers from 0 to 11 }
 
 type
-  TNote = Integer;
+  TNote = type Integer;
 
 const
   noteA         = 0;

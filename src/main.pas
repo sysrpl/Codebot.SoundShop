@@ -6,35 +6,55 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ExtCtrls, Audio, Piano;
+  ExtCtrls, Buttons, Audio, Piano;
 
 { TMusicalForm }
 
 type
   TMusicalForm = class(TForm)
     AudioTimer: TTimer;
-    WaveBox: TComboBox;
+    OpenDialog: TOpenDialog;
+    StopButton: TSpeedButton;
+    TempoBar: TTrackBar;
+    TempoValueLabel: TLabel;
+    WaveLabel: TLabel;
+    MusicPanel: TPanel;
     MuteBox: TCheckBox;
+    SongButton: TSpeedButton;
+    PlayButton: TSpeedButton;
+    WaveBox: TComboBox;
+    TempoLabel: TLabel;
+    SongLabel: TLabel;
     procedure AudioTimerTimer(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormResize(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure MuteBoxChange(Sender: TObject);
+    procedure PlayButtonClick(Sender: TObject);
+    procedure SongButtonClick(Sender: TObject);
+    procedure StopButtonClick(Sender: TObject);
+    procedure TempoBarChange(Sender: TObject);
+    procedure TempoLabelClick(Sender: TObject);
     procedure WaveBoxChange(Sender: TObject);
   private
     FPiano: TPianoKeyboard;
     FMouseDown: Boolean;
     FDownKey: Integer;
+    FTime: Double;
+    FTempo: Double;
+    FTempoTime: Double;
+    FFileName: string;
+    procedure StopMusic;
+    procedure PlayMusic;
     procedure PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
     procedure PianoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure PianoMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure PianoMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-  public
-
   end;
 
 var
@@ -66,6 +86,7 @@ procedure TMusicalForm.FormCreate(Sender: TObject);
 begin
   ThreadsInit;
   AudioInit;
+  FTempo := 1;
   FPiano := TPianoKeyboard.Create(Self);
   FPiano.Parent := Self;
   FPiano.Align := alClient;
@@ -78,8 +99,28 @@ begin
 end;
 
 procedure TMusicalForm.AudioTimerTimer(Sender: TObject);
+var
+  Time, Delta: Double;
+  Minutes, Seconds: Integer;
 begin
-  Caption := Format('Audio time is %.3f', [AudioTime]);
+  if MuteBox.Checked then
+    Exit;
+  Time := AudioTime;
+  Delta := (Time - FTime) * FTempo;
+  FTempoTime := FTempoTime + Delta;
+  FPiano.Music.Play(FTempoTime);
+  if FPiano.Music.Stopped then
+    StopMusic
+  else
+  begin
+    FTime := Time;
+    Minutes := Trunc(Time) div 60;
+    Seconds := Trunc(Time - Minutes * 60);
+    if Seconds < 10 then
+      SongLabel.Caption := Format('Music:  %s / %d:0%d', [FFileName, Minutes, Seconds])
+    else
+      SongLabel.Caption := Format('Music: %s / %d:%d', [FFileName, Minutes, Seconds]);
+  end;
 end;
 
 procedure TMusicalForm.FormDestroy(Sender: TObject);
@@ -184,12 +225,98 @@ begin
   FPiano.ScaleFactor := Scale;
 end;
 
+procedure TMusicalForm.FormShow(Sender: TObject);
+const
+  clStyleText = clWhite;
+  clStyleWindow = 5391680;
+var
+  C: TControl;
+  I: Integer;
+begin
+  OnShow := nil;
+  Color := clStyleWindow;
+  Font.Color := clStyleText;
+  for I := 0 to ComponentCount - 1 do
+    if Components[I] is TControl then
+    begin
+      C := Components[I] as TControl;
+      C.Color := clStyleWindow;
+      C.Font.Color := clStyleText;
+      C := Components[I] as TControl;
+      if C.Parent <> MusicPanel then
+        Continue;
+      C.Top := (MusicPanel.Height - C.Height) div 2;
+    end;
+end;
+
 procedure TMusicalForm.MuteBoxChange(Sender: TObject);
 begin
   if MuteBox.Checked then
     AudioStop
   else
     AudioPlay;
+end;
+
+procedure TMusicalForm.StopMusic;
+begin
+  AudioTimer.Enabled := False;
+  if FFileName <> '' then
+  begin
+    SongLabel.Caption := 'Music:  ' + FFileName + ' / stopped';
+  end
+  else
+    SongLabel.Caption := 'Music:  <no song selected>';
+  FPiano.Reset;
+end;
+
+procedure TMusicalForm.PlayMusic;
+begin
+  if FFileName <> '' then
+  begin
+    FTime := 0;
+    FTempoTime := 0;
+    AudioTimer.Enabled := True;
+    AudioReset;
+  end;
+end;
+
+procedure TMusicalForm.SongButtonClick(Sender: TObject);
+begin
+  if OpenDialog.Execute then
+  begin
+    FPiano.Music.LoadFromFile(OpenDialog.FileName);
+    FFileName := ExtractFileName(OpenDialog.FileName);
+    SetLength(FFileName, Length(FFileName) - 5);
+    StopMusic;
+    PlayMusic;
+  end;
+end;
+
+procedure TMusicalForm.PlayButtonClick(Sender: TObject);
+begin
+  if not AudioTimer.Enabled then
+    PlayMusic;
+end;
+
+procedure TMusicalForm.StopButtonClick(Sender: TObject);
+begin
+  StopMusic;
+end;
+
+procedure TMusicalForm.TempoBarChange(Sender: TObject);
+begin
+  FTempo := TempoBar.Position / 4;
+  if Frac(FTempo) = 0 then
+    TempoValueLabel.Caption := IntToStr(Trunc(FTempo)) + ' x'
+  else if Frac(FTempo * 2) = 0 then
+    TempoValueLabel.Caption := Format('%.1f x', [FTempo])
+  else
+    TempoValueLabel.Caption := Format('%.2f x', [FTempo]);
+end;
+
+procedure TMusicalForm.TempoLabelClick(Sender: TObject);
+begin
+
 end;
 
 procedure TMusicalForm.WaveBoxChange(Sender: TObject);

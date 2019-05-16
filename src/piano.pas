@@ -7,13 +7,47 @@ interface
 uses
   Classes, SysUtils, Graphics, Controls, Music, Scaling;
 
-{ TPianoKeyboard }
+{ TPianoMusic }
 
 type
-  TPianoKeyEvent = procedure(Sender: TObject; Key: Integer; Down: Boolean) of object;
+  TPianoToggleEvent = procedure(Sender: TObject; Item: Integer; Down: Boolean) of object;
+
+  TPianoMusic = class(TPersistent)
+  private
+  type
+    TPianoNote = class
+      Note: TNote;
+      Start: Double;
+      Duration: Double;
+      Played: Boolean;
+      Completed: Boolean;
+    end;
+  var
+    FNotes: TList;
+    FOnNoteToggle: TPianoToggleEvent;
+    FStopped: Boolean;
+  protected
+    procedure DoNoteToggle(Note: TNote; Down: Boolean); virtual;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
+    procedure Add(Note: TNote; Start, Duration: Double);
+    procedure Remove(Note: TNote; Start: Double);
+    procedure Clear;
+    procedure Play(Time: Double);
+    procedure Reset;
+    procedure LoadFromFile(const FileName: string);
+    procedure SaveToFile(const FileName: string);
+    property Stopped: Boolean read FStopped;
+    property OnNoteToggle: TPianoToggleEvent read FOnNoteToggle write FOnNoteToggle;
+  end;
+
+{ TPianoKeyboard }
 
   TPianoKeyboard = class(TGraphicControl)
   private
+    FMusic: TPianoMusic;
     FScaleFactor: Double;
     FCalculatedSize: TPoint;
     FNaturalSize: TPoint;
@@ -24,7 +58,7 @@ type
     FSharp: TRasterImage;
     FSharpDown: TRasterImage;
     FKeys: array of Boolean;
-    FOnKeyToggle: TPianoKeyEvent;
+    FOnKeyToggle: TPianoToggleEvent;
     function InternalKeyToRect(Index: Integer): TRect;
     procedure RecalculateSize;
     function GetKey(Index: Integer): Boolean;
@@ -32,7 +66,9 @@ type
     procedure SetKeyCount(Value: Integer);
     function GetKeyCount: Integer;
     procedure SetScaleFactor(Value: Double);
+    procedure SetMusic(Value: TPianoMusic);
   protected
+    procedure MusicNoteToggle(Sender: TObject; Note: Integer; Down: Boolean); virtual;
     procedure DoKeyToggle(Key: Integer; Down: Boolean); virtual;
     procedure NeedImages;
     procedure Paint; override;
@@ -44,14 +80,17 @@ type
     function KeyFromPoint(X, Y: Integer): Integer;
     function KeyToRect(Index: Integer): TRect;
     function KeyToFrequency(Index: Integer): Double;
-    function KeyToNote(Index: Integer): Integer;
+    function KeyToNote(Index: Integer): TNote;
+    function NoteToKey(Note: TNote): Integer;
     function KeyToString(Index: Integer): string;
+    procedure Reset;
     procedure SetMargin(const Rect: TRect);
     property Key[Index: Integer]: Boolean read GetKey write SetKey;
+    property Music: TPianoMusic read FMusic write SetMusic;
   published
     property KeyCount: Integer read GetKeyCount write SetKeyCount;
     property ScaleFactor: Double read FScaleFactor write SetScaleFactor;
-    property OnKeyToggle: TPianoKeyEvent read FOnKeyToggle write FOnKeyToggle;
+    property OnKeyToggle: TPianoToggleEvent read FOnKeyToggle write FOnKeyToggle;
     property Align;
     property Color;
     property OnClick;
@@ -64,6 +103,216 @@ type
 implementation
 
 {$R piano.res}
+
+constructor TPianoMusic.Create;
+begin
+  inherited Create;
+  FNotes := TList.Create;
+end;
+
+destructor TPianoMusic.Destroy;
+begin
+  Clear;
+  FNotes.Free;
+  inherited Destroy;
+end;
+
+procedure TPianoMusic.DoNoteToggle(Note: TNote; Down: Boolean);
+begin
+  if Assigned(FOnNoteToggle) then
+    FOnNoteToggle(Self, Note, Down);
+end;
+
+procedure TPianoMusic.Assign(Source: TPersistent);
+var
+  Music: TPianoMusic;
+  S, D: TPianoNote;
+  I: Integer;
+begin
+  if Source = Self then
+    Exit;
+  if Source is TPianoMusic then
+  begin
+    Clear;
+    Music := Source as TPianoMusic;
+    for I := 0 to Music.FNotes.Count - 1 do
+    begin
+      S := TPianoNote(Music.FNotes[I]);
+      D := TPianoNote.Create;
+      D.Note := S.Note;
+      D.Start := S.Start;
+      D.Duration := S.Duration;
+      FNotes.Add(D);
+    end;
+  end
+  else
+    inherited Assign(Source);
+end;
+
+procedure TPianoMusic.Add(Note: TNote; Start, Duration: Double);
+var
+  Item: TPianoNote;
+  I: Integer;
+begin
+  FStopped := False;
+  if Start < 0 then
+    Start := 0;
+  if Duration < 0.01 then
+    Exit;
+  for I := 0 to FNotes.Count - 1 do
+  begin
+    Item := TPianoNote(FNotes[I]);
+    if (Item.Note = Note) and (Item.Start = Start) then
+    begin
+      Item.Duration := Duration;
+      Exit;
+    end;
+  end;
+  Item := TPianoNote.Create;
+  Item.Note := Note;
+  Item.Start := Start;
+  Item.Duration := Duration;
+  FNotes.Add(Item);
+end;
+
+procedure TPianoMusic.Remove(Note: TNote; Start: Double);
+var
+  Item: TPianoNote;
+  I: Integer;
+begin
+  FStopped := False;
+  if Start < 0 then
+    Start := 0;
+  for I := 0 to FNotes.Count - 1 do
+  begin
+    Item := TPianoNote(FNotes[I]);
+    if (Item.Note = Note) and (Item.Start = Start) then
+    begin
+      FNotes.Remove(Item);
+      Exit;
+    end;
+  end;
+end;
+
+procedure TPianoMusic.Clear;
+var
+  I: Integer;
+begin
+  for I := 0 to FNotes.Count - 1 do
+    TObject(FNotes[I]).Free;
+  FNotes.Clear;
+  FStopped := False;
+end;
+
+procedure TPianoMusic.Play(Time: Double);
+var
+  Item: TPianoNote;
+  StopCount: Integer;
+  I: Integer;
+begin
+  if FStopped then Exit;
+  StopCount := 0;
+  for I := 0 to FNotes.Count - 1 do
+  begin
+    Item := TPianoNote(FNotes[I]);
+    if Item.Completed then
+    begin
+      Inc(StopCount);
+      Continue;
+    end;
+    if Time < Item.Start then
+      Continue;
+    if Time > Item.Start + Item.Duration then
+    begin
+      if Item.Played then
+        DoNoteToggle(Item.Note, False);
+      Item.Completed := True;
+      Inc(StopCount);
+    end
+    else
+    begin
+      if Item.Played then
+        Continue;
+      DoNoteToggle(Item.Note, True);
+      Item.Played := True;
+    end;
+  end;
+  FStopped := StopCount = FNotes.Count;
+end;
+
+procedure TPianoMusic.Reset;
+var
+  Item: TPianoNote;
+  I: Integer;
+begin
+  for I := 0 to FNotes.Count - 1 do
+  begin
+    Item := TPianoNote(FNotes[I]);
+    Item.Played := False;
+    Item.Completed := False;
+  end;
+  FStopped := False;
+end;
+
+procedure TPianoMusic.LoadFromFile(const FileName: string);
+var
+  Strings, Line: TStrings;
+  Item: TPianoNote;
+  Note: Integer;
+  Start, Duration: Double;
+  S: string;
+  I: Integer;
+begin
+  Clear;
+  Strings := TStringList.Create;
+  Line := TStringList.Create;
+  try
+    Strings.LoadFromFile(FileName);
+    for I := 0 to Strings.Count - 1 do
+    begin
+      S := Trim(Strings[I]);
+      if S = '' then
+        Continue;
+      Line.Clear;
+      ExtractStrings([' '], [' '], PChar(S), Line);
+      if Line.Count <> 3 then
+        Continue;
+      Note := StrToIntDef(Line[0], -1000);
+      Start := StrToFloatDef(Line[1], -1);
+      Duration := StrToFloatDef(Line[2], -1);
+      if (Note < -999) or (Start < 0) or (Duration < 0) then
+        Continue;
+      Item := TPianoNote.Create;
+      Item.Note := Note;
+      Item.Start := Start;
+      Item.Duration := Duration;
+      FNotes.Add(Item);
+    end;
+  finally
+    Line.Free;
+    Strings.Free;
+  end;
+  FStopped := False;
+end;
+
+procedure TPianoMusic.SaveToFile(const FileName: string);
+var
+  Strings: TStrings;
+  Item: TPianoNote;
+  I: Integer;
+begin
+  Strings := TStringList.Create;
+  try
+    for I := 0 to FNotes.Count - 1 do
+    begin
+      Item := TPianoNote(FNotes[I]);
+      Strings.Add('%d %.3f %.3f', [Item.Note, Item.Start, Item.Duration]);
+    end;
+    Strings.SaveToFile(FileName);
+  finally
+    Strings.Free;
+  end;
+end;
 
 var
   NaturalShared: TRasterImage;
@@ -94,6 +343,8 @@ var
   I: Integer;
 begin
   inherited Create(AOwner);
+  FMusic := TPianoMusic.Create;
+  FMusic.OnNoteToggle := MusicNoteToggle;
   if NaturalShared = nil then
   begin
     NaturalShared := TPortableNetworkGraphic.Create;
@@ -119,7 +370,13 @@ begin
   FNaturalDown.Free;
   FSharp.Free;
   FSharpDown.Free;
+  FMusic.Free;
   inherited Destroy;
+end;
+
+procedure TPianoKeyboard.MusicNoteToggle(Sender: TObject; Note: Integer; Down: Boolean);
+begin
+  Key[NoteToKey(Note)] := Down;
 end;
 
 function TPianoKeyboard.InternalKeyToRect(Index: Integer): TRect;
@@ -243,7 +500,7 @@ begin
     Result := MusicNote(KeyToNote(Index));
 end;
 
-function TPianoKeyboard.KeyToNote(Index: Integer): Integer;
+function TPianoKeyboard.KeyToNote(Index: Integer): TNote;
 var
   I: Integer;
 begin
@@ -252,12 +509,31 @@ begin
   Result := Result - (I div 24) * 12;
 end;
 
+function TPianoKeyboard.NoteToKey(Note: TNote): Integer;
+var
+  I: Integer;
+begin
+  Result := -1;
+  for I := Low(FKeys) to High(FKeys) do
+    if KeyToNote(I) = Note then
+      Exit(I);
+end;
+
 function TPianoKeyboard.KeyToString(Index: Integer): string;
 begin
   if (Index < Low(FKeys)) or (Index > High(FKeys)) then
     Result := ''
   else
     Result := MusicNoteName(KeyToNote(Index));
+end;
+
+procedure TPianoKeyboard.Reset;
+var
+  I: Integer;
+begin
+  for I := Low(FKeys) to High(FKeys) do
+    Key[I] := False;
+  FMusic.Reset;
 end;
 
 procedure TPianoKeyboard.SetMargin(const Rect: TRect);
@@ -395,6 +671,11 @@ begin
     RecalculateSize;
     Invalidate;
   end;
+end;
+
+procedure TPianoKeyboard.SetMusic(Value: TPianoMusic);
+begin
+  FMusic.Assign(Value);
 end;
 
 initialization

@@ -14,17 +14,6 @@ object MusicalForm: TMusicalForm
   OnResize = FormResize
   OnShow = FormShow
   Position = poScreenCenter
-  object MuteBox: TCheckBox
-    Left = 8
-    Height = 23
-    Top = 224
-    Width = 984
-    Align = alBottom
-    BorderSpacing.Around = 8
-    Caption = 'Audio muted'
-    OnChange = MuteBoxChange
-    TabOrder = 0
-  end
   object MusicPanel: TPanel
     Left = 0
     Height = 46
@@ -34,7 +23,7 @@ object MusicalForm: TMusicalForm
     BevelOuter = bvNone
     ClientHeight = 46
     ClientWidth = 1000
-    TabOrder = 1
+    TabOrder = 0
     object WaveBox: TComboBox
       Left = 56
       Height = 27
@@ -72,6 +61,7 @@ object MusicalForm: TMusicalForm
       Hint = 'Open a song'
       Top = 8
       Width = 32
+      Flat = True
       Glyph.Data = {
         760C0000424D760C00000000000036000000280000001C0000001C0000000100
         200000000000400C000064000000640000000000000000000000000000000000
@@ -184,6 +174,7 @@ object MusicalForm: TMusicalForm
       Hint = 'Play the loaded song'
       Top = 8
       Width = 32
+      Flat = True
       Glyph.Data = {
         760C0000424D760C00000000000036000000280000001C0000001C0000000100
         200000000000400C000064000000640000000000000000000000000000000000
@@ -321,6 +312,7 @@ object MusicalForm: TMusicalForm
       Hint = 'Stop the current song'
       Top = 8
       Width = 32
+      Flat = True
       Glyph.Data = {
         760C0000424D760C00000000000036000000280000001C0000001C0000000100
         200000000000400C000064000000640000000000000000000000000000000000
@@ -450,9 +442,41 @@ object MusicalForm: TMusicalForm
       ParentColor = False
     end
   end
+  object BottomPanel: TPanel
+    Left = 0
+    Height = 39
+    Top = 216
+    Width = 1000
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 39
+    ClientWidth = 1000
+    TabOrder = 1
+    object MuteBox: TCheckBox
+      Left = 8
+      Height = 23
+      Top = 8
+      Width = 23
+      Align = alLeft
+      BorderSpacing.Around = 8
+      OnChange = MuteBoxChange
+      TabOrder = 0
+    end
+    object MuteLabel: TLabel
+      Left = 39
+      Height = 39
+      Top = 0
+      Width = 89
+      Align = alLeft
+      Caption = 'Audio muted'
+      Layout = tlCenter
+      ParentColor = False
+      OnClick = MuteLabelClick
+    end
+  end
   object AudioTimer: TTimer
     Enabled = False
-    Interval = 10
+    Interval = 5
     OnTimer = AudioTimerTimer
     left = 64
     top = 152

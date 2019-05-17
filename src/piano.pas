@@ -26,6 +26,7 @@ type
     FNotes: TList;
     FOnNoteToggle: TPianoToggleEvent;
     FStopped: Boolean;
+    FTime: Double;
   protected
     procedure DoNoteToggle(Note: TNote; Down: Boolean); virtual;
   public
@@ -40,6 +41,7 @@ type
     procedure LoadFromFile(const FileName: string);
     procedure SaveToFile(const FileName: string);
     property Stopped: Boolean read FStopped;
+    property Time: Double read FTime;
     property OnNoteToggle: TPianoToggleEvent read FOnNoteToggle write FOnNoteToggle;
   end;
 
@@ -225,7 +227,11 @@ begin
     if Time > Item.Start + Item.Duration then
     begin
       if Item.Played then
+      begin
+        FTime := Item.Start + Item.Duration;
         DoNoteToggle(Item.Note, False);
+        FTime := 0;
+      end;
       Item.Completed := True;
       Inc(StopCount);
     end
@@ -233,7 +239,9 @@ begin
     begin
       if Item.Played then
         Continue;
+      FTime := Item.Start;
       DoNoteToggle(Item.Note, True);
+      FTime := 0;
       Item.Played := True;
     end;
   end;

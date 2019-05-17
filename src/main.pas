@@ -13,13 +13,15 @@ uses
 type
   TMusicalForm = class(TForm)
     AudioTimer: TTimer;
+    MuteLabel: TLabel;
+    MuteBox: TCheckBox;
     OpenDialog: TOpenDialog;
+    BottomPanel: TPanel;
     StopButton: TSpeedButton;
     TempoBar: TTrackBar;
     TempoValueLabel: TLabel;
     WaveLabel: TLabel;
     MusicPanel: TPanel;
-    MuteBox: TCheckBox;
     SongButton: TSpeedButton;
     PlayButton: TSpeedButton;
     WaveBox: TComboBox;
@@ -33,6 +35,7 @@ type
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure MuteBoxChange(Sender: TObject);
+    procedure MuteLabelClick(Sender: TObject);
     procedure PlayButtonClick(Sender: TObject);
     procedure SongButtonClick(Sender: TObject);
     procedure StopButtonClick(Sender: TObject);
@@ -255,6 +258,11 @@ begin
     AudioStop
   else
     AudioPlay;
+end;
+
+procedure TMusicalForm.MuteLabelClick(Sender: TObject);
+begin
+  MuteBox.Checked := not MuteBox.Checked;
 end;
 
 procedure TMusicalForm.StopMusic;

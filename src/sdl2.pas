@@ -6,10 +6,12 @@ interface
 
 {.$define static}
 
-{$ifdef static}
+{$if defined(static)}
   {$define libsdl2 := external}
-{$else}
+{$elseif defined(linux)}
   {$define libsdl2 := external 'SDL2-2.0'}
+{$elseif defined(windows)}
+  {$define libsdl2 := external 'SDL2'}
 {$endif}
 {$packrecords c}
 
@@ -2305,7 +2307,7 @@ const
 implementation
 
 {$ifdef static}
-	{$linklib SDL2}
+  {$linklib SDL2}
 {$endif}
 
 { Macros from all headers }

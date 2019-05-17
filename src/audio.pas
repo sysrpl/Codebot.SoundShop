@@ -22,8 +22,8 @@ function WavePulse(Value: Double): Double;
 procedure AudioStop;
 { Reume playing audio }
 procedure AudioPlay;
-{ Set the frequency for a channel }
-procedure AudioVoice(Channel: Integer; Frequency: Double);
+{ Set the frequency for a channel, optionally with a start time }
+procedure AudioVoice(Channel: Integer; Frequency: Double; Time: Double = 0);
 { Set the wave form for all the voices }
 procedure AudioWaveForm(Wave: TWaveForm);
 { The time as calculated by the audio system }
@@ -41,7 +41,7 @@ uses
 
 const
   SampleRate = 44100;
-  Volume = 2048;
+  Volume = 4096;
 
 var
   Mutex: PSDL_Mutex;
@@ -78,6 +78,12 @@ begin
   if Value < 0.5 then Result := 0 else Result := 1;
 end;
 
+const
+  ChannelLow = 0;
+  ChannelHigh = 127;
+  AudioSampleSize = AUDIO_SAMPLE_MEDIUM;
+  AudioBufferSize = AudioSampleSize * AUDIO_CHAN_STEREO;
+
 type
   TAudioSample = record
     L: SmallInt;
@@ -85,11 +91,6 @@ type
   end;
   PAudioSample = ^TAudioSample;
 
-const
-  ChannelLow = 0;
-  ChannelHigh = 127;
-
-type
   TChannel = record
     { The note to be played }
     Frequency: Double;
@@ -104,7 +105,7 @@ type
 var
   AudioInitialized: Boolean;
   AudioLoaded: Boolean;
-  AudioBuffer: array[0..AUDIO_SAMPLE_MEDIUM * 2] of Byte;
+  AudioBuffer: array[1..AudioBufferSize] of Byte;
   AudioCounter: Int64;
   AudioChannels: array[ChannelLow..ChannelHigh] of TChannel;
   AudioWave: TWaveForm = WaveSine;
@@ -164,13 +165,20 @@ var
     S: SmallInt;
     I: LongInt;
   begin
-    FillChar(AudioBuffer, SizeOf(AudioBuffer), 0);
+    FillChar(AudioBuffer, AudioBufferSize, 0);
     Frequency := SampleRate / Frequency;
     Sample := PAudioSample(@AudioBuffer);
     Marker := Time;
     C := AudioCounter;
-    for I := 1 to len div SizeOf(TAudioSample) do
+    for I := 1 to AudioBufferSize div SizeOf(TAudioSample) do
     begin
+      if Marker < Start then
+      begin
+        Inc(C);
+        Inc(Sample);
+        Marker := Marker + Slice;
+        Continue;
+      end;
       V := Frac(C / Frequency + Phase);
       if Marker - Start < Attack then
         Mix := (Marker - Start) / Attack
@@ -195,7 +203,7 @@ var
       Inc(Sample);
       Marker := Marker + Slice;
     end;
-    SDL_MixAudio(stream, @AudioBuffer, len, SDL_MIX_MAXVOLUME);
+    SDL_MixAudio(stream, @AudioBuffer, AudioBufferSize, SDL_MIX_MAXVOLUME);
   end;
 
 var
@@ -204,6 +212,8 @@ var
   I: Integer;
 begin
   FillChar(stream^, len, 0);
+  if len <> AudioBufferSize then
+    Exit;
   SDL_LockMutex(Mutex);
   try
     Time := AudioCounter / AUDIO_FREQ_CD_QUALITY;
@@ -214,7 +224,7 @@ begin
       if (F > 10) and (F < 30000) and (S + Sustain > Time) then
         PlayFrequency(F, S, AudioChannels[I].Drop, AudioChannels[I].Phase);
     end;
-    AudioCounter := AudioCounter + len div SizeOf(TAudioSample);
+    AudioCounter := AudioCounter + AudioBufferSize div SizeOf(TAudioSample);
   finally
     SDL_UnlockMutex(Mutex);
   end;
@@ -232,26 +242,31 @@ begin
     SDL_PauseAudio(0);
 end;
 
-procedure AudioVoice(Channel: Integer; Frequency: Double);
+procedure AudioVoice(Channel: Integer; Frequency: Double; Time: Double = 0);
+const
+  Delta = 0.01;
 var
-  Time: Double;
+  Start: Double;
 begin
   if Channel in [ChannelLow..ChannelHigh] then
   begin
     SDL_LockMutex(Mutex);
     try
-      Time := AudioCounter / AUDIO_FREQ_CD_QUALITY;
+      if Time > 0 then
+        Start := Time + Delta
+      else
+        Start := AudioCounter / AUDIO_FREQ_CD_QUALITY;
       if Frequency = 0 then
       begin
-        if Time < AudioChannels[Channel].Time + Sustain then
-          AudioChannels[Channel].Drop := Time + Release
+        if Start < AudioChannels[Channel].Time + Sustain then
+          AudioChannels[Channel].Drop := Start + Release
         else
           AudioChannels[Channel].Drop := 0;
       end
       else
       begin
         AudioChannels[Channel].Frequency := Frequency;
-        AudioChannels[Channel].Time := Time;
+        AudioChannels[Channel].Time := Start;
         AudioChannels[Channel].Drop := 0;
         AudioChannels[Channel].Phase := Random;
       end;
@@ -286,7 +301,7 @@ begin
     Spec.format := AUDIO_S16;
     Spec.channels := AUDIO_CHAN_STEREO;
     Spec.freq := AUDIO_FREQ_CD_QUALITY;
-    Spec.samples := AUDIO_SAMPLE_MEDIUM;
+    Spec.samples := AudioSampleSize;
     Spec.callback := @AudioMixer;
     SDL_OpenAudio(@Spec, nil);
     SDL_PauseAudio(0);
@@ -300,6 +315,7 @@ begin
   if Result then
   begin
     SDL_Quit;
+    SDL_LockMutex(Mutex);
     SDL_DestroyMutex(Mutex);
   end;
   AudioLoaded := False;

@@ -44,7 +44,6 @@
           <Linking>
             <Debugging>
               <DebugInfoType Value="dsDwarf2Set"/>
-              <UseHeaptrc Value="True"/>
               <TrashVariables Value="True"/>
               <UseExternalDbgSyms Value="True"/>
             </Debugging>
@@ -114,7 +113,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="8">
+    <Units Count="9">
       <Unit0>
         <Filename Value="soundshop.pas"/>
         <IsPartOfProject Value="True"/>
@@ -157,6 +156,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="Scaling"/>
       </Unit7>
+      <Unit8>
+        <Filename Value="recording.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Recording"/>
+      </Unit8>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -110,6 +110,7 @@ constructor TPianoMusic.Create;
 begin
   inherited Create;
   FNotes := TList.Create;
+  FTime := 0;
 end;
 
 destructor TPianoMusic.Destroy;

@@ -7,7 +7,7 @@ uses
   CThreads,
   {$endif}
   Interfaces,
-  Forms, SDL2, Music, Scaling, Piano, Audio, Main
+  Forms, SDL2, Music, Scaling, Piano, Audio, Main, Recording
   { Add units here };
 
 {$R *.res}

@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ExtCtrls, Buttons, Audio, Piano;
+  ExtCtrls, Buttons, Audio, Piano, Recording;
 
 { TMusicalForm }
 
@@ -17,7 +17,10 @@ type
     MuteBox: TCheckBox;
     OpenDialog: TOpenDialog;
     BottomPanel: TPanel;
+    RecordStopButton: TSpeedButton;
+    SaveDialog: TSaveDialog;
     StopButton: TSpeedButton;
+    RecordStartButton: TSpeedButton;
     TempoBar: TTrackBar;
     TempoValueLabel: TLabel;
     WaveLabel: TLabel;
@@ -37,6 +40,8 @@ type
     procedure MuteBoxChange(Sender: TObject);
     procedure MuteLabelClick(Sender: TObject);
     procedure PlayButtonClick(Sender: TObject);
+    procedure RecordStartButtonClick(Sender: TObject);
+    procedure RecordStopButtonClick(Sender: TObject);
     procedure SongButtonClick(Sender: TObject);
     procedure StopButtonClick(Sender: TObject);
     procedure TempoBarChange(Sender: TObject);
@@ -46,10 +51,9 @@ type
     FPiano: TPianoKeyboard;
     FMouseDown: Boolean;
     FDownKey: Integer;
-    FTime: Double;
     FTempo: Double;
-    FTempoTime: Double;
     FFileName: string;
+    FRecorder: TAudioRecorder;
     procedure StopMusic;
     procedure PlayMusic;
     procedure PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
@@ -99,24 +103,24 @@ begin
   FPiano.OnMouseDown := PianoMouseDown;
   FPiano.OnMouseMove := PianoMouseMove;
   FPiano.OnMouseUp := PianoMouseUp;
+  FRecorder := TAudioRecorder.Create;
 end;
 
 procedure TMusicalForm.AudioTimerTimer(Sender: TObject);
+const
+  TimeOffset = 0.1;
 var
-  Time, Delta: Double;
+  Time: Double;
   Minutes, Seconds: Integer;
 begin
   if MuteBox.Checked then
     Exit;
   Time := AudioTime;
-  Delta := (Time - FTime) * FTempo;
-  FTempoTime := FTempoTime + Delta;
-  FPiano.Music.Play(FTempoTime);
+  FPiano.Music.Play(Time + TimeOffset);
   if FPiano.Music.Stopped then
     StopMusic
   else
   begin
-    FTime := Time;
     Minutes := Trunc(Time) div 60;
     Seconds := Trunc(Time - Minutes * 60);
     if Seconds < 10 then
@@ -129,12 +133,13 @@ end;
 procedure TMusicalForm.FormDestroy(Sender: TObject);
 begin
   AudioQuit;
+  FRecorder.Free;
 end;
 
 procedure TMusicalForm.PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
 begin
   if Down then
-    AudioVoice(Key, FPiano.KeyToFrequency(Key))
+    AudioVoice(Key, FPiano.KeyToFrequency(Key), FPiano.Music.Time)
   else
     AudioVoice(Key, 0);
 end;
@@ -281,8 +286,6 @@ procedure TMusicalForm.PlayMusic;
 begin
   if FFileName <> '' then
   begin
-    FTime := 0;
-    FTempoTime := 0;
     AudioTimer.Enabled := True;
     AudioReset;
   end;
@@ -306,6 +309,24 @@ begin
     PlayMusic;
 end;
 
+procedure TMusicalForm.RecordStartButtonClick(Sender: TObject);
+begin
+  RecordStartButton.Visible := False;
+  RecordStopButton.Visible := True;
+  FRecorder.Reset;
+  AudioRecordingStart(FRecorder.WriteMemory);
+end;
+
+procedure TMusicalForm.RecordStopButtonClick(Sender: TObject);
+begin
+  RecordStopButton.Visible := False;
+  RecordStartButton.Visible := True;
+  AudioRecordingStop;
+  if SaveDialog.Execute then
+    FRecorder.SaveToFile(SaveDialog.FileName);
+  FRecorder.Reset;
+end;
+
 procedure TMusicalForm.StopButtonClick(Sender: TObject);
 begin
   StopMusic;
@@ -320,6 +341,7 @@ begin
     TempoValueLabel.Caption := Format('%.1f x', [FTempo])
   else
     TempoValueLabel.Caption := Format('%.2f x', [FTempo]);
+  AudioTempo(FTempo);
 end;
 
 procedure TMusicalForm.TempoLabelClick(Sender: TObject);

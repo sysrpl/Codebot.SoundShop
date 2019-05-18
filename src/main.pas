@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ExtCtrls, Buttons, Audio, Piano, Wave;
+  ExtCtrls, Buttons, Audio, Piano, Music, Wave;
 
 { TMusicalForm }
 
@@ -54,6 +54,7 @@ type
     FTempo: Double;
     FFileName: string;
     FRecorder: TWaveRecorder;
+    FWaves: TList;
     procedure StopMusic;
     procedure PlayMusic;
     procedure PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
@@ -62,6 +63,8 @@ type
     procedure PianoMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure PianoMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure VoiceReadData(Channel: Integer; Offset: Integer; out L,
+      R: SmallInt);
   end;
 
 var
@@ -89,7 +92,23 @@ end;
 
 { TMusicalForm }
 
+function NoteToFile(Note: TNote): string;
+const
+  SampleFolder = 'samples/';
+var
+  D: TNoteDetails;
+begin
+  D := MusicNoteDetails(Note);
+  Result := SampleFolder + D.Name;
+  if D.Sharp then
+    Result := Result + 'sharp';
+  Result := Result + IntToStr(D.Octave + 4) + '.wav';
+end;
+
 procedure TMusicalForm.FormCreate(Sender: TObject);
+var
+  Wave: TWaveData;
+  I: Integer;
 begin
   ThreadsInit;
   AudioInit;
@@ -104,6 +123,33 @@ begin
   FPiano.OnMouseMove := PianoMouseMove;
   FPiano.OnMouseUp := PianoMouseUp;
   FRecorder := TWaveRecorder.Create;
+  FWaves := TList.Create;
+  for I := 0 to FPiano.KeyCount - 1 do
+  begin
+    Wave := TWaveData.Create;
+    FWaves.Add(Wave);
+    Wave.LoadFromFile(NoteToFile(FPiano.KeyToNote(I)));
+  end;
+end;
+
+
+procedure TMusicalForm.FormDestroy(Sender: TObject);
+var
+  I: Integer;
+begin
+  AudioQuit;
+  FRecorder.Free;
+  for I := 0 to FWaves.Count - 1 do
+    TObject(FWaves[I]).Free;
+  FWaves.Free;
+end;
+
+procedure TMusicalForm.VoiceReadData(Channel: Integer; Offset: Integer; out L, R: SmallInt);
+var
+  Wave: TWaveData;
+begin
+  Wave := TWaveData(FWaves[Channel]);
+  Wave.Read(Offset, L, R);
 end;
 
 procedure TMusicalForm.AudioTimerTimer(Sender: TObject);
@@ -128,12 +174,6 @@ begin
     else
       SongLabel.Caption := Format('Music: %s / %d:%d', [FFileName, Minutes, Seconds]);
   end;
-end;
-
-procedure TMusicalForm.FormDestroy(Sender: TObject);
-begin
-  AudioQuit;
-  FRecorder.Free;
 end;
 
 procedure TMusicalForm.PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
@@ -288,6 +328,8 @@ begin
   begin
     AudioTimer.Enabled := True;
     AudioReset;
+    if WaveBox.ItemIndex = 6 then
+      AudioVoiceWave(VoiceReadData);
   end;
 end;
 
@@ -351,6 +393,7 @@ end;
 
 procedure TMusicalForm.WaveBoxChange(Sender: TObject);
 begin
+  AudioVoiceWave(nil);
   case WaveBox.ItemIndex of
     0: AudioWaveForm(WaveSine);
     1: AudioWaveForm(WaveSaw);
@@ -358,6 +401,8 @@ begin
     3: AudioWaveForm(WaveSquare);
     4: AudioWaveForm(WavePulse);
     5: AudioWaveForm(WaveSemisine);
+  else
+    AudioVoiceWave(VoiceReadData);
   end;
 end;
 

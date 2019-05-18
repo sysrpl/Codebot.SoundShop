@@ -18,12 +18,17 @@ function WaveSquare(Value: Double): Double;
 function WaveTriangle(Value: Double): Double;
 function WavePulse(Value: Double): Double;
 
+type
+  TWaveReadData = procedure(Channel: Integer; Offset: Integer; out L, R: SmallInt) of object;
+
 { Stop playing audio }
 procedure AudioStop;
 { Reume playing audio }
 procedure AudioPlay;
 { Set the frequency for a channel, optionally with a start time }
 procedure AudioVoice(Channel: Integer; Frequency: Double; Time: Double = 0);
+{ Set all channel to read wave data instead of using wave forms }
+procedure AudioVoiceWave(ReadData: TWaveReadData);
 { Set the wave form for all the voices }
 procedure AudioWaveForm(Wave: TWaveForm);
 { The time as calculated by the audio system }
@@ -110,8 +115,13 @@ type
     Drop: Double;
     { A small phase change for each channel }
     Phase: Double;
-    { Culmination of sample values }
-    Sample: Integer;
+    { Culmination of left and right sample values }
+    L: Integer;
+    R: Integer;
+    { Optional read wave procedure }
+    ReadData: TWaveReadData;
+    { Optional read wave procedure }
+    ReadIndex: Integer;
     { Play a channel if it is active }
     Active: Boolean;
   end;
@@ -174,8 +184,8 @@ end;
 
 const
   Attack = 0.1;
-  Release = 0.1;
-  Sustain = 5.0;
+  Release = 0.2;
+  Sustain = 7.0;
   Slice = 1 / AUDIO_FREQ_CD_QUALITY;
 
 procedure AudioMixer(userdata: Pointer; stream: PUInt8; len: LongInt); cdecl;
@@ -190,10 +200,10 @@ var
     Start is the time the note was started
     Drop is the time the note was released }
 
-  procedure PlayChannel(var Channel: TChannel);
+  procedure PlayChannel(var Channel: TChannel; ChannelIndex: Integer);
   const
     DeadMix = 0.05;
-    Smooth = 80;
+    Smooth = 100;
     SmoothSmall = 1 / Smooth;
     SmoothBig = 1 - SmoothSmall;
   var
@@ -202,7 +212,7 @@ var
     Mix: Double;
     C: Int64;
     F, V: Double;
-    S: SmallInt;
+    L, R: SmallInt;
     I: LongInt;
   begin
     if (Channel.Frequency < 10) or (Channel.Frequency > 30000) then
@@ -214,11 +224,18 @@ var
     C := AudioCounter;
     for I := 1 to len div SizeOf(TAudioSample) do
     begin
-      S := 0;
+      L := 0;
+      R := 0;
       if Marker < Channel.Start then
-        S := 0
+      begin
+        L := 0;
+        R := 0;
+      end
       else if F < 10 then
-        S := 0
+      begin
+        L := 0;
+        R := 0;
+      end
       else
       begin
         V := Frac(C / F + Channel.Phase);
@@ -235,6 +252,7 @@ var
           if Marker >= Channel.Drop then
           begin
             Channel.Frequency := 0;
+            Channel.ReadIndex := 0;
             Channel.Active := False;
             Mix := 0
           end
@@ -242,14 +260,32 @@ var
             Mix := Mix * (Channel.Drop - Marker) / ReleaseTime;
         end;
         if Mix < DeadMix then
-          S := 0
+        begin
+          L := 0;
+          R := 0;
+        end
         else
-          S := Trunc(AudioWave(V) * Volume * Mix);
+        begin
+          if Assigned(Channel.ReadData) then
+          begin
+            Channel.ReadData(ChannelIndex, Channel.ReadIndex, L, R);
+            R := Trunc(R * Mix);
+            L := Trunc(L * Mix);
+          end
+          else
+          begin
+            L := Trunc(AudioWave(V) * Volume * Mix);
+            R := L;
+          end;
+          Inc(Channel.ReadIndex);
+        end;
       end;
-      S := Trunc(Channel.Sample * SmoothBig + S * SmoothSmall);
-      Inc(Sample.L, S);
-      Inc(Sample.R, S);
-      Channel.Sample := S;
+      L := Trunc(Channel.L * SmoothBig + L * SmoothSmall);
+      R := Trunc(Channel.R * SmoothBig + R * SmoothSmall);
+      Inc(Sample.L, L);
+      Inc(Sample.R, R);
+      Channel.L := L;
+      Channel.R := R;
       Inc(C);
       Inc(Sample);
       Marker := Marker + SliceTime;
@@ -269,7 +305,7 @@ begin
     SliceTime := Slice * AudioTimeFactor;
     for I := Low(AudioChannels) to High(AudioChannels) do
       if AudioChannels[I].Active then
-        PlayChannel(AudioChannels[I]);
+        PlayChannel(AudioChannels[I], I);
     AudioCounter := AudioCounter + len div SizeOf(TAudioSample);
     AudioTimeCounter := Round(AudioTimeCounter + len div SizeOf(TAudioSample) * AudioTimeFactor);
     if Assigned(AudioWrite) then
@@ -320,12 +356,26 @@ begin
         AudioChannels[Channel].Frequency := Frequency;
         AudioChannels[Channel].Start := Start;
         AudioChannels[Channel].Drop := 0;
+        AudioChannels[Channel].ReadIndex := 0;
         AudioChannels[Channel].Phase := Channel / ChannelHigh;
         AudioChannels[Channel].Active := True;
       end;
     finally
       SDL_UnlockMutex(Mutex);
     end;
+  end;
+end;
+
+procedure AudioVoiceWave(ReadData: TWaveReadData);
+var
+  I: Integer;
+begin
+  SDL_LockMutex(Mutex);
+  try
+    for I := Low(AudioChannels) to High(AudioChannels) do
+      AudioChannels[I].ReadData := ReadData;
+  finally
+    SDL_UnlockMutex(Mutex);
   end;
 end;
 

@@ -46,10 +46,20 @@ const
   HertzG        = 391.995;
   HertzGsharp   = 415.305;
 
+type
+  TNoteDetails = record
+    Note: Integer;
+    Name: Char;
+    Sharp: Boolean;
+    Octave: Integer;
+  end;
+
 { The MusicNote function returns a frequency given a note and optional steps }
 function MusicNote(Note: TNote; HalfSteps: Integer = 0; Octave: Integer = 0): Double;
 { The MusicNoteName function returns the name of a note }
 function MusicNoteName(Note: TNote; HalfSteps: Integer = 0; Octave: Integer = 0): string;
+{ The MusicNoteDetails function returns the details of a note }
+function MusicNoteDetails(Note: TNote; HalfSteps: Integer = 0; Octave: Integer = 0): TNoteDetails;
 
 implementation
 
@@ -135,6 +145,85 @@ begin
     Result := 'G sharp ';
   end;
   Result := Result + IntToStr(Octave);
+end;
+
+function MusicNoteDetails(Note: TNote; HalfSteps: Integer = 0; Octave: Integer = 0): TNoteDetails;
+begin
+  Note := Note + HalfSteps + Octave * 12;
+  Octave := 0;
+  while Note < 0 do
+  begin
+    Note := Note + 12;
+    Dec(Octave);
+  end;
+  while Note > 11 do
+  begin
+    Note := Note - 12;
+    Inc(Octave);
+  end;
+  Result.Note := Note;
+  case Note of
+    noteA:
+      begin
+        Result.Name := 'A';
+        Result.Sharp := False;
+      end;
+    noteAsharp:
+      begin
+        Result.Name := 'A';
+        Result.Sharp := True;
+      end;
+    noteB:
+      begin
+        Result.Name := 'B';
+        Result.Sharp := False;
+      end;
+    noteC:
+      begin
+        Result.Name := 'C';
+        Result.Sharp := False;
+      end;
+    noteCsharp:
+      begin
+        Result.Name := 'C';
+        Result.Sharp := True;
+      end;
+    noteD:
+      begin
+        Result.Name := 'D';
+        Result.Sharp := False;
+      end;
+    noteDsharp:
+      begin
+        Result.Name := 'D';
+        Result.Sharp := True;
+      end;
+    noteE:
+      begin
+        Result.Name := 'E';
+        Result.Sharp := False;
+      end;
+    noteF:
+      begin
+        Result.Name := 'F';
+        Result.Sharp := False;
+      end;
+    noteFsharp:
+      begin
+        Result.Name := 'F';
+        Result.Sharp := True;
+      end;
+    noteG:
+      begin
+        Result.Name := 'G';
+        Result.Sharp := False;
+      end;
+  else
+    { Note is G sharp }
+    Result.Name := 'G';
+    Result.Sharp := True;
+  end;
+  Result.Octave := Octave;
 end;
 
 end.

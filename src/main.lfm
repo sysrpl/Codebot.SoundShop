@@ -14,7 +14,6 @@ object MusicalForm: TMusicalForm
   OnResize = FormResize
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '2.0.2.0'
   object MusicPanel: TPanel
     Left = 0
     Height = 46
@@ -40,6 +39,7 @@ object MusicalForm: TMusicalForm
         'Square Wave'
         'Pulse Wave'
         'Semisine Wave'
+        'Grand Piano'
       )
       OnChange = WaveBoxChange
       Style = csDropDownList

@@ -21,16 +21,16 @@ type
     procedure SaveToFile(const FileName: string);
   end;
 
-{ TWaveSamples }
+{ TWaveData }
 
-  TWaveSamples = class
+  TWaveData = class
   private
     FData: Pointer;
     FCount: LongWord;
   public
     destructor Destroy; override;
     procedure LoadFromFile(const FileName: string);
-    procedure Read(SampleIndex: LongWord; out L, R: SmallInt);
+    procedure Read(Offset: LongWord; out L, R: SmallInt);
     procedure Reset;
     { Number of samples }
     property Count: LongWord read FCount;
@@ -135,7 +135,7 @@ begin
   end;
 end;
 
-{ TWaveSamples }
+{ TWaveData }
 
 type
   TSample = record
@@ -145,50 +145,49 @@ type
 
 { See this page http://theremin.music.uiowa.edu/MISpiano.html  }
 
-destructor TWaveSamples.Destroy;
+destructor TWaveData.Destroy;
 begin
   Reset;
   inherited Destroy;
 end;
 
-procedure TWaveSamples.LoadFromFile(const FileName: string);
+procedure TWaveData.LoadFromFile(const FileName: string);
 var
   Stream: TMemoryStream;
-  B: PByte;
   H: TWaveHeader;
 begin
   Reset;
+  if not FileExists(FileName) then
+    Exit;
   Stream := TMemoryStream.Create;
   try
     Stream.LoadFromFile(FileName);
-    B := Stream.Memory;
     Stream.Read(H, SizeOf(H));
     FCount := (Stream.Size - SizeOf(H)) div SizeOf(TSample);
     if FCount < 1 then
       Exit;
-    Inc(B, SizeOf(H));
-    GetMem(FData, FCount * SizeOf(TSample));
-    Move(B^, FData, FCount * SizeOf(TSample));
+    FData := GetMem(FCount * SizeOf(TSample));
+    Stream.Read(FData^, FCount * SizeOf(TSample));
   finally
     Stream.Free;
   end;
 end;
 
-procedure TWaveSamples.Read(SampleIndex: LongWord; out L, R: SmallInt);
+procedure TWaveData.Read(Offset: LongWord; out L, R: SmallInt);
 var
   S: PSample;
 begin
   L := 0;
   R := 0;
-  if (FData = nil) or (SampleIndex > FCount - 1) then
+  if (FData = nil) or (Offset > FCount - 1) then
     Exit;
   S := FData;
-  Inc(S, SampleIndex);
+  Inc(S, Offset);
   L := S.L;
   R := S.R;
 end;
 
-procedure TWaveSamples.Reset;
+procedure TWaveData.Reset;
 begin
   if FData <> nil then
     FreeMem(FData);

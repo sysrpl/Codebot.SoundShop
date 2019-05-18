@@ -3,7 +3,7 @@
   <ProjectSession>
     <Version Value="11"/>
     <BuildModes Active="Debug"/>
-    <Units Count="16">
+    <Units Count="17">
       <Unit0>
         <Filename Value="soundshop.pas"/>
         <IsPartOfProject Value="True"/>
@@ -20,7 +20,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
-        <TopLine Value="46"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="89"/>
+        <CursorPos Y="109"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -46,12 +48,11 @@
         <Filename Value="audio.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Audio"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="272"/>
-        <CursorPos Y="294"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="25"/>
         <UsageCount Value="200"/>
         <Bookmarks Count="1">
-          <Item0 X="47" Y="148" ID="1"/>
+          <Item0 Y="377" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -60,10 +61,9 @@
         <Filename Value="piano.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Piano"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="89"/>
-        <CursorPos X="18" Y="245"/>
-        <UsageCount Value="186"/>
+        <EditorIndex Value="4"/>
+        <CursorPos X="14" Y="85"/>
+        <UsageCount Value="196"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit5>
@@ -71,9 +71,11 @@
         <Filename Value="music.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Music"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="8" Y="10"/>
-        <UsageCount Value="177"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="27"/>
+        <CursorPos X="20" Y="54"/>
+        <UsageCount Value="187"/>
+        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit6>
       <Unit7>
@@ -81,17 +83,17 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="Scaling"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="164"/>
+        <UsageCount Value="174"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit7>
       <Unit8>
         <Filename Value="wave.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Wave"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="2"/>
-        <CursorPos X="63" Y="146"/>
-        <UsageCount Value="58"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="139"/>
+        <CursorPos X="23" Y="188"/>
+        <UsageCount Value="68"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit8>
@@ -99,35 +101,35 @@
         <Filename Value="../../../../../Development/FreePascal/lazarus/lcl/interfaces/gtk2/gtk2widgetset.inc"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="30"/>
-        <UsageCount Value="3"/>
+        <UsageCount Value="2"/>
       </Unit9>
       <Unit10>
         <Filename Value="../../../../../Development/FreePascal/lazarus/lcl/include/rasterimage.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="786"/>
         <CursorPos Y="810"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit10>
       <Unit11>
         <Filename Value="../../../../../Development/FreePascal/lazarus/lcl/include/sharedcustombitmap.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="56"/>
         <CursorPos Y="88"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit11>
       <Unit12>
         <Filename Value="../../../../../Development/FreePascal/lazarus/lcl/include/sharedrasterimage.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="4"/>
         <CursorPos Y="48"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit12>
       <Unit13>
         <Filename Value="../../../../../Development/FreePascal/fpc/rtl/inc/threadh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="135"/>
         <CursorPos X="59" Y="160"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit13>
       <Unit14>
         <Filename Value="../../../../../Development/FreePascal/lazarus/lcl/customtimer.pas"/>
@@ -135,134 +137,138 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="152"/>
         <CursorPos Y="176"/>
-        <UsageCount Value="4"/>
+        <UsageCount Value="3"/>
       </Unit14>
       <Unit15>
         <Filename Value="../../../../../Development/FreePascal/fpc/rtl/objpas/classes/classesh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="956"/>
         <CursorPos X="3" Y="977"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit15>
+      <Unit16>
+        <Filename Value="../../../../../../../Development/FreePascal/lazarus/lcl/stdctrls.pp"/>
+        <UnitName Value="StdCtrls"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="420"/>
+        <CursorPos X="14" Y="442"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit16>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="audio.pas"/>
-        <Caret Line="330" Column="46" TopLine="289"/>
+        <Caret Line="119" Column="6" TopLine="96"/>
       </Position1>
       <Position2>
         <Filename Value="audio.pas"/>
-        <Caret Line="257" TopLine="223"/>
+        <Caret Line="274" Column="30" TopLine="240"/>
       </Position2>
       <Position3>
         <Filename Value="audio.pas"/>
-        <Caret Line="247" Column="30" TopLine="214"/>
+        <Caret Line="120" Column="6" TopLine="97"/>
       </Position3>
       <Position4>
-        <Filename Value="audio.pas"/>
-        <Caret Line="248" Column="22" TopLine="214"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="142" Column="37" TopLine="109"/>
       </Position4>
       <Position5>
-        <Filename Value="audio.pas"/>
-        <Caret Line="155" Column="41" TopLine="127"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="145" Column="29" TopLine="111"/>
       </Position5>
       <Position6>
-        <Filename Value="audio.pas"/>
-        <Caret Line="218" Column="14" TopLine="196"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="147" TopLine="109"/>
       </Position6>
       <Position7>
-        <Filename Value="audio.pas"/>
-        <Caret Line="56" Column="16" TopLine="28"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="150" TopLine="107"/>
       </Position7>
       <Position8>
-        <Filename Value="audio.pas"/>
-        <Caret Line="407" Column="21" TopLine="381"/>
+        <Filename Value="wave.pas"/>
+        <Caret Line="33" Column="23" TopLine="10"/>
       </Position8>
       <Position9>
-        <Filename Value="audio.pas"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="130" TopLine="113"/>
       </Position9>
       <Position10>
-        <Filename Value="audio.pas"/>
-        <Caret Line="407" Column="3" TopLine="385"/>
+        <Filename Value="main.pas"/>
       </Position10>
       <Position11>
-        <Filename Value="audio.pas"/>
-        <Caret Line="405" TopLine="390"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="319" Column="15" TopLine="281"/>
       </Position11>
       <Position12>
-        <Filename Value="wave.pas"/>
-        <Caret Line="13" Column="16"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="327" Column="15" TopLine="289"/>
       </Position12>
       <Position13>
         <Filename Value="main.pas"/>
-        <Caret Line="161" Column="61" TopLine="101"/>
+        <Caret Line="355" Column="18" TopLine="317"/>
       </Position13>
       <Position14>
-        <Filename Value="wave.pas"/>
-        <Caret Line="34" Column="58"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="127" TopLine="103"/>
       </Position14>
       <Position15>
         <Filename Value="wave.pas"/>
-        <Caret Line="39" TopLine="27"/>
+        <Caret Line="32" Column="15" TopLine="9"/>
       </Position15>
       <Position16>
-        <Filename Value="wave.pas"/>
-        <Caret Line="34" Column="17"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="145" TopLine="101"/>
       </Position16>
       <Position17>
-        <Filename Value="wave.pas"/>
-        <Caret Line="32" Column="25" TopLine="18"/>
+        <Filename Value="main.pas"/>
       </Position17>
       <Position18>
-        <Filename Value="wave.pas"/>
-        <Caret Line="152" Column="14" TopLine="128"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="318" Column="15" TopLine="281"/>
       </Position18>
       <Position19>
-        <Filename Value="wave.pas"/>
-        <Caret Line="29" Column="5"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="327" Column="8" TopLine="289"/>
       </Position19>
       <Position20>
-        <Filename Value="wave.pas"/>
-        <Caret Line="180" Column="18" TopLine="136"/>
+        <Filename Value="main.pas"/>
       </Position20>
       <Position21>
-        <Filename Value="wave.pas"/>
-        <Caret Line="34" Column="18" TopLine="10"/>
+        <Filename Value="../../../../../../../Development/FreePascal/lazarus/lcl/stdctrls.pp"/>
       </Position21>
       <Position22>
-        <Filename Value="wave.pas"/>
-        <Caret Line="29" Column="17" TopLine="6"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="327" Column="25" TopLine="290"/>
       </Position22>
       <Position23>
-        <Filename Value="wave.pas"/>
-        <Caret Line="33" Column="25" TopLine="6"/>
+        <Filename Value="main.pas"/>
       </Position23>
       <Position24>
-        <Filename Value="wave.pas"/>
-        <Caret Line="176" Column="3" TopLine="150"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="327" Column="25" TopLine="290"/>
       </Position24>
       <Position25>
-        <Filename Value="wave.pas"/>
-        <Caret Line="29" Column="11" TopLine="6"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="395" TopLine="360"/>
       </Position25>
       <Position26>
-        <Filename Value="wave.pas"/>
-        <Caret Line="35" Column="19" TopLine="6"/>
+        <Filename Value="main.pas"/>
       </Position26>
       <Position27>
-        <Filename Value="wave.pas"/>
-        <Caret Line="36" Column="18" TopLine="6"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="328" Column="3" TopLine="290"/>
       </Position27>
       <Position28>
-        <Filename Value="wave.pas"/>
-        <Caret Line="34" Column="15" TopLine="6"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="393" Column="25" TopLine="356"/>
       </Position28>
       <Position29>
-        <Filename Value="wave.pas"/>
-        <Caret Line="182" Column="3" TopLine="151"/>
+        <Filename Value="main.pas"/>
       </Position29>
       <Position30>
-        <Filename Value="wave.pas"/>
+        <Filename Value="audio.pas"/>
+        <Caret Line="206" Column="17" TopLine="178"/>
       </Position30>
     </JumpHistory>
     <RunParams>

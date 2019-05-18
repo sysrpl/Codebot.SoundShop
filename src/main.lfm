@@ -14,6 +14,7 @@ object MusicalForm: TMusicalForm
   OnResize = FormResize
   OnShow = FormShow
   Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
   object MusicPanel: TPanel
     Left = 0
     Height = 46
@@ -557,7 +558,7 @@ object MusicalForm: TMusicalForm
     object RecordStopButton: TSpeedButton
       Left = 328
       Height = 32
-      Hint = 'Start recording'
+      Hint = 'Stop recording'
       Top = 8
       Width = 32
       Flat = True

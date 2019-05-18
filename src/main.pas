@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ExtCtrls, Buttons, Audio, Piano, Recording;
+  ExtCtrls, Buttons, Audio, Piano, Wave;
 
 { TMusicalForm }
 
@@ -53,7 +53,7 @@ type
     FDownKey: Integer;
     FTempo: Double;
     FFileName: string;
-    FRecorder: TAudioRecorder;
+    FRecorder: TWaveRecorder;
     procedure StopMusic;
     procedure PlayMusic;
     procedure PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
@@ -103,7 +103,7 @@ begin
   FPiano.OnMouseDown := PianoMouseDown;
   FPiano.OnMouseMove := PianoMouseMove;
   FPiano.OnMouseUp := PianoMouseUp;
-  FRecorder := TAudioRecorder.Create;
+  FRecorder := TWaveRecorder.Create;
 end;
 
 procedure TMusicalForm.AudioTimerTimer(Sender: TObject);

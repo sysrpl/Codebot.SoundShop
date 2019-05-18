@@ -157,9 +157,9 @@
         <UnitName Value="Scaling"/>
       </Unit7>
       <Unit8>
-        <Filename Value="recording.pas"/>
+        <Filename Value="wave.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Recording"/>
+        <UnitName Value="Wave"/>
       </Unit8>
     </Units>
   </ProjectOptions>

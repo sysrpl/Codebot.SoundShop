@@ -53,7 +53,7 @@ uses
 
 const
   SampleRate = 44100;
-  Volume = 2048;
+  Volume = 4096;
 
 var
   Mutex: PSDL_Mutex;
@@ -105,11 +105,15 @@ type
     { The note to be played }
     Frequency: Double;
     { The time the note was started }
-    Time: Double;
+    Start: Double;
     { The time the note was released }
     Drop: Double;
     { A small phase change for each channel }
     Phase: Double;
+    { Culmination of sample values }
+    Sample: Integer;
+    { Play a channel if it is active }
+    Active: Boolean;
   end;
 
 var
@@ -161,7 +165,7 @@ begin
     try
       AudioCounter := 0;
       AudioTimeCounter := 0;
-      FillChar(AudioChannels[ChannelLow], Length(AudioChannels) * SizeOf(TChannel), 0);
+      FillChar(AudioChannels[0], Length(AudioChannels) * SizeOf(TChannel), 0);
     finally
       SDL_UnlockMutex(Mutex);
     end;
@@ -186,53 +190,66 @@ var
     Start is the time the note was started
     Drop is the time the note was released }
 
-  procedure PlayFrequency(Frequency, Start, Drop, Phase: Double);
+  procedure PlayChannel(var Channel: TChannel);
   const
     DeadMix = 0.05;
+    Smooth = 80;
+    SmoothSmall = 1 / Smooth;
+    SmoothBig = 1 - SmoothSmall;
   var
     Sample: PAudioSample;
     Marker: Double;
     Mix: Double;
     C: Int64;
-    V: Double;
+    F, V: Double;
     S: SmallInt;
     I: LongInt;
   begin
-    Frequency := SampleRate / Frequency;
+    if (Channel.Frequency < 10) or (Channel.Frequency > 30000) then
+      F := 0
+    else
+      F := SampleRate / Channel.Frequency;
     Sample := PAudioSample(stream);
     Marker := Time;
     C := AudioCounter;
     for I := 1 to len div SizeOf(TAudioSample) do
     begin
-      if Marker < Start then
-      begin
-        Inc(C);
-        Inc(Sample);
-        Marker := Marker + SliceTime;
-        Continue;
-      end;
-      V := Frac(C / Frequency + Phase);
-      if Marker - Start < Attack * AudioTimeFactor then
-        Mix := (Marker - Start) / AttackTime
-      else
-        Mix := 1;
-      if Marker - Start > SustainTime then
-        Mix := 0
-      else
-        Mix := Mix * (1 - (Marker - Start) / SustainTime);
-      if Drop > 0 then
-      begin
-        if Marker >= Drop then
-          Exit
-        else
-          Mix := Mix * (Drop - Marker) / ReleaseTime;
-      end;
-      if Mix < DeadMix then
+      S := 0;
+      if Marker < Channel.Start then
+        S := 0
+      else if F < 10 then
         S := 0
       else
-        S := Trunc(AudioWave(V) * Volume * Mix);
+      begin
+        V := Frac(C / F + Channel.Phase);
+        if Marker - Channel.Start < Attack * AudioTimeFactor then
+          Mix := (Marker - Channel.Start) / AttackTime
+        else
+          Mix := 1;
+        if Marker - Channel.Start > SustainTime then
+          Mix := 0
+        else
+          Mix := Mix * (1 - (Marker - Channel.Start) / SustainTime);
+        if Channel.Drop > 0 then
+        begin
+          if Marker >= Channel.Drop then
+          begin
+            Channel.Frequency := 0;
+            Channel.Active := False;
+            Mix := 0
+          end
+          else
+            Mix := Mix * (Channel.Drop - Marker) / ReleaseTime;
+        end;
+        if Mix < DeadMix then
+          S := 0
+        else
+          S := Trunc(AudioWave(V) * Volume * Mix);
+      end;
+      S := Trunc(Channel.Sample * SmoothBig + S * SmoothSmall);
       Inc(Sample.L, S);
-      Dec(Sample.R, S);
+      Inc(Sample.R, S);
+      Channel.Sample := S;
       Inc(C);
       Inc(Sample);
       Marker := Marker + SliceTime;
@@ -240,8 +257,6 @@ var
   end;
 
 var
-  F: Double;
-  S: Double;
   I: Integer;
 begin
   FillChar(stream^, len, 0);
@@ -253,12 +268,8 @@ begin
     SustainTime := Sustain * AudioTimeFactor;
     SliceTime := Slice * AudioTimeFactor;
     for I := Low(AudioChannels) to High(AudioChannels) do
-    begin
-      F := AudioChannels[I].Frequency;
-      S := AudioChannels[I].Time;
-      if (F > 10) and (F < 30000) and (S + SustainTime > Time) then
-        PlayFrequency(F, S, AudioChannels[I].Drop, AudioChannels[I].Phase);
-    end;
+      if AudioChannels[I].Active then
+        PlayChannel(AudioChannels[I]);
     AudioCounter := AudioCounter + len div SizeOf(TAudioSample);
     AudioTimeCounter := Round(AudioTimeCounter + len div SizeOf(TAudioSample) * AudioTimeFactor);
     if Assigned(AudioWrite) then
@@ -296,7 +307,7 @@ begin
         Start := AudioTimeCounter / AUDIO_FREQ_CD_QUALITY;
       if Frequency = 0 then
       begin
-        if Start < AudioChannels[Channel].Time + Sustain then
+        if AudioChannels[Channel].Start + Sustain > Start then
           AudioChannels[Channel].Drop := Start + Release * AudioTimeFactor
         else
         begin
@@ -307,9 +318,10 @@ begin
       else
       begin
         AudioChannels[Channel].Frequency := Frequency;
-        AudioChannels[Channel].Time := Start;
+        AudioChannels[Channel].Start := Start;
         AudioChannels[Channel].Drop := 0;
-        AudioChannels[Channel].Phase := Random;
+        AudioChannels[Channel].Phase := Channel / ChannelHigh;
+        AudioChannels[Channel].Active := True;
       end;
     finally
       SDL_UnlockMutex(Mutex);
@@ -384,4 +396,5 @@ begin
 end;
 
 end.
+
 

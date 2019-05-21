@@ -24,6 +24,16 @@ object MusicalForm: TMusicalForm
     ClientHeight = 46
     ClientWidth = 1000
     TabOrder = 0
+    object SongLabel: TLabel
+      Left = 368
+      Height = 46
+      Top = 0
+      Width = 352
+      AutoSize = False
+      Caption = 'Music:  <no song selected>'
+      Layout = tlCenter
+      ParentColor = False
+    end
     object WaveBox: TComboBox
       Left = 56
       Height = 27
@@ -419,16 +429,6 @@ object MusicalForm: TMusicalForm
       OnClick = StopButtonClick
       ShowHint = True
       ParentShowHint = False
-    end
-    object SongLabel: TLabel
-      Left = 368
-      Height = 46
-      Top = 0
-      Width = 352
-      AutoSize = False
-      Caption = 'Music:  <no song selected>'
-      Layout = tlCenter
-      ParentColor = False
     end
     object TempoValueLabel: TLabel
       Left = 936

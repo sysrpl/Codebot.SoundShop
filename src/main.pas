@@ -63,7 +63,7 @@ type
     procedure PianoMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure PianoMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure VoiceReadData(Channel: Integer; Offset: Integer; out L,
+    procedure ReadWaves(Channel: Integer; Offset: Integer; out L,
       R: SmallInt);
   end;
 
@@ -122,6 +122,9 @@ begin
   FPiano.OnMouseDown := PianoMouseDown;
   FPiano.OnMouseMove := PianoMouseMove;
   FPiano.OnMouseUp := PianoMouseUp;
+  FPiano.Music.Overhang := 0.1;
+  FPiano.ShowRoll := True;
+  FPiano.SetMargin(Classes.Rect(0, 1000, 0, 10));
   FRecorder := TWaveRecorder.Create;
   FWaves := TList.Create;
   for I := 0 to FPiano.KeyCount - 1 do
@@ -144,7 +147,7 @@ begin
   FWaves.Free;
 end;
 
-procedure TMusicalForm.VoiceReadData(Channel: Integer; Offset: Integer; out L, R: SmallInt);
+procedure TMusicalForm.ReadWaves(Channel: Integer; Offset: Integer; out L, R: SmallInt);
 var
   Wave: TWaveData;
 begin
@@ -179,9 +182,9 @@ end;
 procedure TMusicalForm.PianoKeyToggle(Sender: TObject; Key: Integer; Down: Boolean);
 begin
   if Down then
-    AudioVoice(Key, FPiano.KeyToFrequency(Key), FPiano.Music.Time)
+    AudioVoice(Key, FPiano.KeyToFrequency(Key), FPiano.Music.Velocity, FPiano.Music.Time)
   else
-    AudioVoice(Key, 0);
+    AudioVoice(Key, 0, 0);
 end;
 
 procedure TMusicalForm.PianoMouseDown(Sender: TObject; Button: TMouseButton;
@@ -295,6 +298,8 @@ begin
         Continue;
       C.Top := (MusicPanel.Height - C.Height) div 2;
     end;
+  WaveBox.ItemIndex := WaveBox.Items.Count - 1;
+  WaveBox.OnChange(WaveBox);
 end;
 
 procedure TMusicalForm.MuteBoxChange(Sender: TObject);
@@ -324,12 +329,13 @@ end;
 
 procedure TMusicalForm.PlayMusic;
 begin
+  //gdk_window_fullscreen(PGtkWidget(Handle)^.window);
   if FFileName <> '' then
   begin
     AudioTimer.Enabled := True;
     AudioReset;
     if WaveBox.ItemIndex = 6 then
-      AudioVoiceWave(VoiceReadData);
+      AudioReadData(ReadWaves);
   end;
 end;
 
@@ -393,7 +399,7 @@ end;
 
 procedure TMusicalForm.WaveBoxChange(Sender: TObject);
 begin
-  AudioVoiceWave(nil);
+  AudioReadData(nil);
   case WaveBox.ItemIndex of
     0: AudioWaveForm(WaveSine);
     1: AudioWaveForm(WaveSaw);
@@ -402,7 +408,7 @@ begin
     4: AudioWaveForm(WavePulse);
     5: AudioWaveForm(WaveSemisine);
   else
-    AudioVoiceWave(VoiceReadData);
+    AudioReadData(ReadWaves);
   end;
 end;
 

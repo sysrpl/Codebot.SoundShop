@@ -26,9 +26,9 @@ procedure AudioStop;
 { Reume playing audio }
 procedure AudioPlay;
 { Set the frequency for a channel, optionally with a start time }
-procedure AudioVoice(Channel: Integer; Frequency: Double; Time: Double = 0);
+procedure AudioVoice(Channel: Integer; Frequency, Velocity: Double; Time: Double = 0);
 { Set all channel to read wave data instead of using wave forms }
-procedure AudioVoiceWave(ReadData: TWaveReadData);
+procedure AudioReadData(ReadData: TWaveReadData);
 { Set the wave form for all the voices }
 procedure AudioWaveForm(Wave: TWaveForm);
 { The time as calculated by the audio system }
@@ -109,6 +109,8 @@ type
   TChannel = record
     { The note to be played }
     Frequency: Double;
+    { The volume of the note played }
+    Velocity: Double;
     { The time the note was started }
     Start: Double;
     { The time the note was released }
@@ -183,7 +185,7 @@ begin
 end;
 
 const
-  Attack = 0.1;
+  Attack = 0.025;
   Release = 0.2;
   Sustain = 7.0;
   Slice = 1 / AUDIO_FREQ_CD_QUALITY;
@@ -269,12 +271,12 @@ var
           if Assigned(Channel.ReadData) then
           begin
             Channel.ReadData(ChannelIndex, Channel.ReadIndex, L, R);
-            R := Trunc(R * Mix);
-            L := Trunc(L * Mix);
+            R := Trunc(R * Mix * Channel.Velocity);
+            L := Trunc(L * Mix * Channel.Velocity);
           end
           else
           begin
-            L := Trunc(AudioWave(V) * Volume * Mix);
+            L := Trunc(AudioWave(V) * Volume * Mix * Channel.Velocity);
             R := L;
           end;
           Inc(Channel.ReadIndex);
@@ -327,7 +329,7 @@ begin
     SDL_PauseAudio(0);
 end;
 
-procedure AudioVoice(Channel: Integer; Frequency: Double; Time: Double = 0);
+procedure AudioVoice(Channel: Integer; Frequency, Velocity: Double; Time: Double = 0);
 const
   Delta = 0.01;
 var
@@ -354,10 +356,11 @@ begin
       else
       begin
         AudioChannels[Channel].Frequency := Frequency;
+        AudioChannels[Channel].Velocity := Velocity;
         AudioChannels[Channel].Start := Start;
         AudioChannels[Channel].Drop := 0;
         AudioChannels[Channel].ReadIndex := 0;
-        AudioChannels[Channel].Phase := Channel / ChannelHigh;
+        AudioChannels[Channel].Phase := Frac(Random);
         AudioChannels[Channel].Active := True;
       end;
     finally
@@ -366,7 +369,7 @@ begin
   end;
 end;
 
-procedure AudioVoiceWave(ReadData: TWaveReadData);
+procedure AudioReadData(ReadData: TWaveReadData);
 var
   I: Integer;
 begin

@@ -706,8 +706,8 @@ object MusicalForm: TMusicalForm
     Enabled = False
     Interval = 5
     OnTimer = AudioTimerTimer
-    left = 64
-    top = 152
+    left = 264
+    top = 88
   end
   object OpenDialog: TOpenDialog
     Filter = 'Song Files (*.song)|*.song'
